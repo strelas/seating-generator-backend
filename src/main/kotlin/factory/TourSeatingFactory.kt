@@ -57,9 +57,9 @@ class TourSeatingFactory(private val players: List<Player>, private val roundCou
     }
 
     private fun generateSomeIllegalRound(): RoundSeating {
-        val A = players.filter { it.skill == Skill.A }
-        val B = players.filter { it.skill == Skill.B }
-        val C = players.filter { it.skill == Skill.C }
+        val A = players.filter { it.skill == Skill.A }.shuffled()
+        val B = players.filter { it.skill == Skill.B }.shuffled()
+        val C = players.filter { it.skill == Skill.C }.shuffled()
         val tables = Array(players.size / 10) {
             Array(10) { Player("", "", Skill.A, arrayListOf()) }
         }
