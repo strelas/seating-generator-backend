@@ -8,39 +8,57 @@ import factory.TourSeatingFactory
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
+import io.ktor.client.utils.*
 import io.ktor.features.*
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import login.LoginManager
+import java.io.File
+import java.time.Duration
 import java.util.*
 import kotlin.collections.HashMap
 import kotlin.random.Random
+import kotlin.time.ExperimentalTime
 
-fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
+fun main(args: Array<String>): Unit {
+    io.ktor.server.netty.EngineMain.main(args)
+}
 
+@ExperimentalTime
 fun Application.module(testing: Boolean = false) {
-    println(Gson().toJson(Player("strelas", "strelas", Skill.A, arrayListOf())))
-    val loginManager = LoginManager()
+    val appAssembly = AppAssembly()
+
+    val loginManager = appAssembly.loginManager
     val secret = environment.config.property("jwt.secret").getString()
     val issuer = environment.config.property("jwt.issuer").getString()
     val audience = environment.config.property("jwt.audience").getString()
     val myRealm = environment.config.property("jwt.realm").getString()
-
+    install(CORS) {
+        anyHost()
+    }
     install(DefaultHeaders) {
-        header(HttpHeaders.AccessControlAllowOrigin, "Access-Control-Allow-Origin, Accept")
+        header(HttpHeaders.AccessControlAllowOrigin, "*")
+        header(HttpHeaders.AccessControlAllowMethods, "DELETE, POST, GET, OPTIONS, PUT")
+        header(
+            HttpHeaders.AccessControlAllowHeaders,
+            "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With"
+        )
         header(HttpHeaders.ETag, "7c876b7e")
     }
 
     install(Authentication) {
         jwt("auth-jwt") {
             realm = myRealm
-            verifier(JWT
-                .require(Algorithm.HMAC256(secret))
-                .withAudience(audience)
-                .withIssuer(issuer)
-                .build())
+            verifier(
+                JWT
+                    .require(Algorithm.HMAC256(secret))
+                    .withAudience(audience)
+                    .withIssuer(issuer)
+                    .build()
+            )
             validate { credential ->
 
                 if (credential.payload.getClaim("username").asString() != "") {
@@ -52,7 +70,10 @@ fun Application.module(testing: Boolean = false) {
         }
     }
     routing {
-        post("/login") {
+        options {
+            call.respondText("", status = HttpStatusCode.NoContent)
+        }
+        post("api/login") {
             val json = Gson().fromJson<HashMap<String, Any>>(call.receive<String>(), java.util.HashMap::class.java)
             if (loginManager.login(json["login"].toString(), json["password"].toString())) {
                 val token = JWT.create()
@@ -61,46 +82,47 @@ fun Application.module(testing: Boolean = false) {
                     .withClaim("username", json["login"].toString())
                     .withExpiresAt(Date(System.currentTimeMillis() + 60 * 60 * 24 * 1000))
                     .sign(Algorithm.HMAC256(secret))
-                call.respondText(hashMapOf("token" to token).toString())
+                call.respondText(Gson().toJson(hashMapOf("token" to token)), status = HttpStatusCode.OK)
             } else {
-                call.respondText { hashMapOf("token" to "").toString() }
+                call.respondText(Gson().toJson(hashMapOf("token" to "")), status = HttpStatusCode.OK)
             }
         }
-        authenticate("auth-jwt") {
-            get("/") {
-                val players = Array(60) {
-                    val skill = when (Random.nextInt() % 3) {
-                        0 -> Skill.A
-                        1 -> Skill.B
-                        2 -> Skill.C
-                        else -> Skill.B
-                    }
-                    val cannotMeet = arrayListOf<String>()
-                    if (it == 0) {
-                        cannotMeet.add("01")
-                    }
-                    if (it == 1) {
-                        cannotMeet.add("00")
-                    }
-                    if (it == 2) {
-                        cannotMeet.add("03")
-                    }
-                    if (it == 3) {
-                        cannotMeet.add("02")
-                    }
-                    if (it == 4) {
-                        cannotMeet.add("05")
-                    }
-                    if (it == 5) {
-                        cannotMeet.add("04")
-                    }
-                    if (it == 6) {
-                        cannotMeet.add("1")
-                    }
-                    Player("0$it", "0$it", skill, cannotMeet)
+        get("/") {
+            val players = Array(60) {
+                val skill = when (Random.nextInt() % 3) {
+                    0 -> Skill.A
+                    1 -> Skill.B
+                    2 -> Skill.C
+                    else -> Skill.B
                 }
-                call.respondText { TourSeatingFactory(players.toList(), 6).generate().toString() }
+                val cannotMeet = arrayListOf<String>()
+                if (it == 0) {
+                    cannotMeet.add("01")
+                }
+                if (it == 1) {
+                    cannotMeet.add("00")
+                }
+                if (it == 2) {
+                    cannotMeet.add("03")
+                }
+                if (it == 3) {
+                    cannotMeet.add("02")
+                }
+                if (it == 4) {
+                    cannotMeet.add("05")
+                }
+                if (it == 5) {
+                    cannotMeet.add("04")
+                }
+                if (it == 6) {
+                    cannotMeet.add("1")
+                }
+                Player("0$it", "0$it", skill, cannotMeet)
             }
+            call.respondText(
+                TourSeatingFactory(players.toList(), 6).generate().toString(),
+                status = HttpStatusCode.OK
+            )
         }
     }
 }
