@@ -1,5 +1,6 @@
 import login.LoginManager
 import sql.MySQLDataBase
+import sql.TournamentRepository
 import sql.UsersRepository
 
 class AppAssembly {
@@ -7,11 +8,13 @@ class AppAssembly {
         return@lazy MySQLDataBase()
     }
 
-    private val usersTableWrapper by lazy {
+    private val usersRepository by lazy {
         return@lazy UsersRepository(sqlDataBase)
     }
 
+    fun getTournamentRepository(id: Int) = TournamentRepository(sqlDataBase, id)
+
     val loginManager by lazy {
-        return@lazy LoginManager(usersTableWrapper)
+        return@lazy LoginManager(usersRepository)
     }
 }

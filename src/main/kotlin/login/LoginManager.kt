@@ -7,18 +7,14 @@ class LoginManager constructor(private val usersRepository: UsersRepository) {
         return usersRepository.checkPassword(login, password)
     }
 
-    fun signUp(login: String, password: String): Boolean {
-        return if (usersRepository.containsUser(login)) {
-            false
-        } else {
+    fun signUp(login: String, password: String) {
+        if (!usersRepository.containsUser(login)) {
             usersRepository.insertUser(login, password)
         }
     }
 
-    fun changePassword(login: String, newPassword: String): Boolean {
-        return if (usersRepository.containsUser(login)) {
-            false
-        } else {
+    fun changePassword(login: String, newPassword: String) {
+        if (usersRepository.containsUser(login)) {
             usersRepository.changePassword(login, newPassword)
         }
     }

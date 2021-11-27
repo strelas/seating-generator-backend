@@ -3,23 +3,16 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.google.gson.Gson
 import entity.Player
 import entity.Skill
-import entity.UserData
 import factory.TourSeatingFactory
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.auth.jwt.*
-import io.ktor.client.utils.*
 import io.ktor.features.*
 import io.ktor.http.*
-import io.ktor.http.content.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
-import login.LoginManager
-import java.io.File
-import java.time.Duration
 import java.util.*
-import kotlin.collections.HashMap
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 
@@ -86,6 +79,24 @@ fun Application.module(testing: Boolean = false) {
             } else {
                 call.respondText(Gson().toJson(hashMapOf("token" to "")), status = HttpStatusCode.OK)
             }
+        }
+        post("/api/tournaments/{id}/append_players") {
+            val id = call.parameters["id"]!!.toInt()
+            val players = Gson().fromJson<List<Player>>(call.receive<String>(), List::class.java)
+            val repository = appAssembly.getTournamentRepository(id)
+            for (player in players) {
+                repository.appendPlayer(player)
+            }
+            call.respond(HttpStatusCode.OK)
+        }
+        post("/api/tournaments/{id}/delete_players") {
+            val id = call.parameters["id"]!!.toInt()
+            val players = Gson().fromJson<List<Player>>(call.receive<String>(), List::class.java)
+            val repository = appAssembly.getTournamentRepository(id)
+            for (player in players) {
+                repository.removePlayer(player)
+            }
+            call.respond(HttpStatusCode.OK)
         }
         get("/") {
             val players = Array(60) {
