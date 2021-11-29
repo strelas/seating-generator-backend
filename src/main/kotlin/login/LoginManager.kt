@@ -25,8 +25,6 @@ class LoginManager constructor(private val usersRepository: UsersRepository) {
 
     fun getTournamentsIds(login: String): List<Int> {
         val tournaments = usersRepository.getTournamentIds(login)
-        println(tournaments)
-        println(login)
         return tournaments
     }
 }

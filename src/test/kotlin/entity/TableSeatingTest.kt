@@ -42,7 +42,6 @@ internal class TableSeatingTest {
             Player("9", "9", Skill.A, arrayListOf()),
             Player("10", "10", Skill.A, arrayListOf()),
         ), "Referee")
-        println(Gson().toJson(correctTable))
         assertEquals(true, correctTable.isLegalTable)
 
         val incorrectTableWithPlayers = TableSeating(arrayListOf(

@@ -57,7 +57,6 @@ internal class TourSeatingFactoryTest {
 
         repeat(10) {
             val seating = factory.generate()
-            println(seating)
             if (seating.rounds.any { !it.isLegalRound }) {
                 flag = false
             }

@@ -86,12 +86,9 @@ fun Application.module(testing: Boolean = false) {
         authenticate("auth-jwt") {
             post("/api/tournaments/{id}/append_players") {
                 val id = call.parameters["id"]!!.toInt()
-                println(id)
                 val type = object : TypeToken<List<Player>>() {}.type
                 val players = Gson().fromJson<List<Player>>(call.receive<String>(), type)
                 val repository = appAssembly.getTournamentRepository(id)
-                println(id)
-                println(players)
                 for (player in players) {
                     repository.appendPlayer(player)
                 }
@@ -112,22 +109,19 @@ fun Application.module(testing: Boolean = false) {
 
                 val tournaments = loginManager.getTournamentsIds(nickname)
                     .map { tournamentsRepository.getTournamentById(it) }
+                    .filterNotNull()
                     .filter { loginManager.ownerOf(nickname, it.id) }
 
                 call.respondText(Gson().toJson(tournaments), status = HttpStatusCode.OK)
             }
-            get("/api/tournaments/{id}/players") {
+            post("/api/tournaments/{id}/players") {
                 val id = call.parameters["id"]!!.toInt()
                 val repository = appAssembly.getTournamentRepository(id)
 
-                val nickname = call.principal<UserIdPrincipal>()?.name
-                if (nickname == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
-                    return@get
-                }
+                val nickname = call.receive<String>()
                 if (!loginManager.ownerOf(nickname, id)) {
                     call.respond(HttpStatusCode.Forbidden)
-                    return@get
+                    return@post
                 }
                 val players = repository.getPlayers()
                 call.respondText(Gson().toJson(players), status = HttpStatusCode.OK)
