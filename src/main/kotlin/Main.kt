@@ -1,8 +1,10 @@
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import entity.Player
 import entity.Skill
+import entity.Tournament
 import factory.TourSeatingFactory
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -25,6 +27,7 @@ fun Application.module(testing: Boolean = false) {
     val appAssembly = AppAssembly()
 
     val loginManager = appAssembly.loginManager
+    val tournamentsRepository = appAssembly.tournamentsRepository
     val secret = environment.config.property("jwt.secret").getString()
     val issuer = environment.config.property("jwt.issuer").getString()
     val audience = environment.config.property("jwt.audience").getString()
@@ -80,23 +83,58 @@ fun Application.module(testing: Boolean = false) {
                 call.respondText(Gson().toJson(hashMapOf("token" to "")), status = HttpStatusCode.OK)
             }
         }
-        post("/api/tournaments/{id}/append_players") {
-            val id = call.parameters["id"]!!.toInt()
-            val players = Gson().fromJson<List<Player>>(call.receive<String>(), List::class.java)
-            val repository = appAssembly.getTournamentRepository(id)
-            for (player in players) {
-                repository.appendPlayer(player)
+        authenticate("auth-jwt") {
+            post("/api/tournaments/{id}/append_players") {
+                val id = call.parameters["id"]!!.toInt()
+                println(id)
+                val type = object : TypeToken<List<Player>>() {}.type
+                val players = Gson().fromJson<List<Player>>(call.receive<String>(), type)
+                val repository = appAssembly.getTournamentRepository(id)
+                println(id)
+                println(players)
+                for (player in players) {
+                    repository.appendPlayer(player)
+                }
+                call.respond(HttpStatusCode.OK)
             }
-            call.respond(HttpStatusCode.OK)
-        }
-        post("/api/tournaments/{id}/delete_players") {
-            val id = call.parameters["id"]!!.toInt()
-            val players = Gson().fromJson<List<Player>>(call.receive<String>(), List::class.java)
-            val repository = appAssembly.getTournamentRepository(id)
-            for (player in players) {
-                repository.removePlayer(player)
+            post("/api/tournaments/{id}/delete_players") {
+                val id = call.parameters["id"]!!.toInt()
+                val type = object : TypeToken<List<Player>>() {}.type
+                val players = Gson().fromJson<List<Player>>(call.receive<String>(), type)
+                val repository = appAssembly.getTournamentRepository(id)
+                for (player in players) {
+                    repository.removePlayer(player)
+                }
+                call.respond(HttpStatusCode.OK)
             }
-            call.respond(HttpStatusCode.OK)
+            post("/api/tournaments") {
+                val nickname = call.receive<String>()
+
+                val tournaments = loginManager.getTournamentsIds(nickname)
+                    .map { tournamentsRepository.getTournamentById(it) }
+                    .filter { loginManager.ownerOf(nickname, it.id) }
+
+                call.respondText(Gson().toJson(tournaments), status = HttpStatusCode.OK)
+            }
+            get("/api/tournaments/{id}/players") {
+                val id = call.parameters["id"]!!.toInt()
+                val repository = appAssembly.getTournamentRepository(id)
+
+                val nickname = call.principal<UserIdPrincipal>()?.name
+                if (nickname == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                    return@get
+                }
+                if (!loginManager.ownerOf(nickname, id)) {
+                    call.respond(HttpStatusCode.Forbidden)
+                    return@get
+                }
+                val players = repository.getPlayers()
+                call.respondText(Gson().toJson(players), status = HttpStatusCode.OK)
+            }
+            get("/api/check") {
+                call.respond(HttpStatusCode.OK)
+            }
         }
         get("/") {
             val players = Array(60) {

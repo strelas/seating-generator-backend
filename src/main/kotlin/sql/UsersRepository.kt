@@ -44,8 +44,10 @@ class UsersRepository constructor(private val database: MySQLDataBase) {
     fun getTournamentIds(login: String): List<Int> {
         return try {
             val set = database.executeQuery("select tournaments from default_schema.users where login = '$login';")
+            set.next()
             set.getString(1).split(",").filter { it.isNotEmpty() }.map { it.toInt() }
         } catch (e: Exception) {
+            e.printStackTrace()
             emptyList()
         }
     }

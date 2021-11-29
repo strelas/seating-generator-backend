@@ -18,4 +18,15 @@ class LoginManager constructor(private val usersRepository: UsersRepository) {
             usersRepository.changePassword(login, newPassword)
         }
     }
+
+    fun ownerOf(login: String, id: Int): Boolean {
+        return getTournamentsIds(login).contains(id)
+    }
+
+    fun getTournamentsIds(login: String): List<Int> {
+        val tournaments = usersRepository.getTournamentIds(login)
+        println(tournaments)
+        println(login)
+        return tournaments
+    }
 }
