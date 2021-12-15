@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken
 import entity.Player
 import entity.Skill
 import entity.Tournament
+import factory.MeetingDecreaseFactory
 import factory.TourSeatingFactory
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -108,8 +109,7 @@ fun Application.module(testing: Boolean = false) {
                 val nickname = call.receive<String>()
 
                 val tournaments = loginManager.getTournamentsIds(nickname)
-                    .map { tournamentsRepository.getTournamentById(it) }
-                    .filterNotNull()
+                    .mapNotNull { tournamentsRepository.getTournamentById(it) }
                     .filter { loginManager.ownerOf(nickname, it.id) }
 
                 call.respondText(Gson().toJson(tournaments), status = HttpStatusCode.OK)
