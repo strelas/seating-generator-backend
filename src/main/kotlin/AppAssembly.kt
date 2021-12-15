@@ -14,7 +14,7 @@ class AppAssembly {
     }
 
     val tournamentsRepository by lazy {
-        return@lazy TournamentsRepository(sqlDataBase)
+        return@lazy TournamentsRepository(sqlDataBase, usersRepository)
     }
 
     fun getTournamentRepository(id: Int) = TournamentRepository(sqlDataBase, id)

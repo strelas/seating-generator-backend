@@ -4,15 +4,14 @@ import entity.Player
 import entity.Skill
 
 class TournamentRepository constructor(private val database: MySQLDataBase, private val id: Int) {
-    private val schemaName = "tournament_$id"
+    private val table = "default_schema.tournament_$id"
 
     init {
-        val set = database.executeQuery("show schemas like '$schemaName';")
+        val set = database.executeQuery("show tables from default_schema like 'tournament_$id';")
         if (!set.next()) {
-            database.execute("create schema '$schemaName';")
-
+            throw Exception("Table is not exist")
             database.execute(
-                "create table $schemaName.players\n" +
+                "create table $table\n" +
                         "(\n" +
                         "    nickname    varchar(255)             not null,\n" +
                         "    fiimnick    varchar(255)             not null,\n" +
@@ -29,7 +28,7 @@ class TournamentRepository constructor(private val database: MySQLDataBase, priv
 
     private fun containsPlayer(player: Player): Boolean {
         return try {
-            val set = database.executeQuery("select * from $schemaName.players where nickname = '${player.nickname}';")
+            val set = database.executeQuery("select * from $table where nickname = '${player.nickname}';")
             set.next()
         } catch (e: Exception) {
             false
@@ -40,7 +39,7 @@ class TournamentRepository constructor(private val database: MySQLDataBase, priv
         try {
             if (containsPlayer(player)) {
                 database.execute(
-                    "UPDATE $schemaName.players t\n" +
+                    "UPDATE $table t\n" +
                             "SET t.fiimnick = '${player.fiimNickname}',\n" +
                             "    t.skill    = ${player.skill.ordinal},\n" +
                             "    t.cannot_meet = '${player.cannotMeet.joinToString(",")}',\n" +
@@ -49,7 +48,7 @@ class TournamentRepository constructor(private val database: MySQLDataBase, priv
                 )
             } else {
                 database.execute(
-                    "INSERT INTO $schemaName.players (nickname, fiimnick, skill, cannot_meet, place) " +
+                    "INSERT INTO $table (nickname, fiimnick, skill, cannot_meet, place) " +
                             "VALUES ('${player.nickname}', '${player.nickname}', ${player.skill.ordinal}, '${
                                 player.cannotMeet.joinToString(",")
                             }', ${player.place});"
@@ -61,7 +60,7 @@ class TournamentRepository constructor(private val database: MySQLDataBase, priv
 
     fun removePlayer(player: Player) {
         try {
-            database.execute("delete from $schemaName.players where nickname like '${player.nickname}' escape '#'")
+            database.execute("delete from $table where nickname like '${player.nickname}' escape '#'")
         } catch (e: Exception) {
         }
     }
@@ -69,7 +68,7 @@ class TournamentRepository constructor(private val database: MySQLDataBase, priv
     fun getPlayers(): List<Player> {
         try {
             val result = ArrayList<Player>()
-            val set = database.executeQuery("select * from $schemaName.players;")
+            val set = database.executeQuery("select * from $table;")
             while (set.next()) {
                 result.add(
                     Player(

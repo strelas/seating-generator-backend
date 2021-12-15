@@ -15,6 +15,7 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import sql.TournamentRepository
 import java.util.*
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
@@ -129,6 +130,14 @@ fun Application.module(testing: Boolean = false) {
             get("/api/check") {
                 call.respond(HttpStatusCode.OK)
             }
+        }
+        post("/api/tournaments/create") {
+            val json = Gson().fromJson<Map<String, Any?>>(call.receive<String>(), Map::class.java)
+            val login = json["login"] as String
+            val name = json["name"] as String
+
+            tournamentsRepository.createTournament(name, login)
+            call.respond(HttpStatusCode.OK)
         }
         get("/") {
             val players = Array(60) {
