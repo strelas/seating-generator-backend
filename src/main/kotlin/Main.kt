@@ -58,7 +58,6 @@ fun Application.module(testing: Boolean = false) {
                     .build()
             )
             validate { credential ->
-
                 if (credential.payload.getClaim("username").asString() != "") {
                     JWTPrincipal(credential.payload)
                 } else {
@@ -68,9 +67,6 @@ fun Application.module(testing: Boolean = false) {
         }
     }
     routing {
-        options {
-            call.respondText("", status = HttpStatusCode.NoContent)
-        }
         post("api/login") {
             val json = Gson().fromJson<HashMap<String, Any>>(call.receive<String>(), java.util.HashMap::class.java)
             if (loginManager.login(json["login"].toString(), json["password"].toString())) {
@@ -91,23 +87,33 @@ fun Application.module(testing: Boolean = false) {
                 val type = object : TypeToken<List<Player>>() {}.type
                 val players = Gson().fromJson<List<Player>>(call.receive<String>(), type)
                 val repository = appAssembly.getTournamentRepository(id)
-                for (player in players) {
-                    repository.appendPlayer(player)
+                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString()
+                if (loginManager.ownerOf(nickname, id)) {
+                    for (player in players) {
+                        repository.appendPlayer(player)
+                    }
+                    call.respond(HttpStatusCode.OK)
+                } else {
+                    call.respond(HttpStatusCode.Forbidden)
                 }
-                call.respond(HttpStatusCode.OK)
             }
             post("/api/tournaments/{id}/delete_players") {
                 val id = call.parameters["id"]!!.toInt()
                 val type = object : TypeToken<List<Player>>() {}.type
                 val players = Gson().fromJson<List<Player>>(call.receive<String>(), type)
                 val repository = appAssembly.getTournamentRepository(id)
-                for (player in players) {
-                    repository.removePlayer(player)
+                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString()
+                if (!loginManager.ownerOf(nickname, id)) {
+                    call.respond(HttpStatusCode.Forbidden)
+                } else {
+                    for (player in players) {
+                        repository.removePlayer(player)
+                    }
+                    call.respond(HttpStatusCode.OK)
                 }
-                call.respond(HttpStatusCode.OK)
             }
-            post("/api/tournaments") {
-                val nickname = call.receive<String>()
+            get("/api/tournaments") {
+                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString()
 
                 val tournaments = loginManager.getTournamentsIds(nickname)
                     .mapNotNull { tournamentsRepository.getTournamentById(it) }
@@ -115,14 +121,14 @@ fun Application.module(testing: Boolean = false) {
 
                 call.respondText(Gson().toJson(tournaments), status = HttpStatusCode.OK)
             }
-            post("/api/tournaments/{id}/players") {
+            get("/api/tournaments/{id}/players") {
                 val id = call.parameters["id"]!!.toInt()
                 val repository = appAssembly.getTournamentRepository(id)
 
-                val nickname = call.receive<String>()
+                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString()
                 if (!loginManager.ownerOf(nickname, id)) {
                     call.respond(HttpStatusCode.Forbidden)
-                    return@post
+                    return@get
                 }
                 val players = repository.getPlayers()
                 call.respondText(Gson().toJson(players), status = HttpStatusCode.OK)
@@ -130,51 +136,54 @@ fun Application.module(testing: Boolean = false) {
             get("/api/check") {
                 call.respond(HttpStatusCode.OK)
             }
-        }
-        post("/api/tournaments/create") {
-            val json = Gson().fromJson<Map<String, Any?>>(call.receive<String>(), Map::class.java)
-            val login = json["login"] as String
-            val name = json["name"] as String
+            post("/api/tournaments/create") {
+                val json = Gson().fromJson<Map<String, Any?>>(call.receive<String>(), Map::class.java)
+                val login = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString()
+                val name = json["name"] as String
 
-            tournamentsRepository.createTournament(name, login)
-            call.respond(HttpStatusCode.OK)
-        }
-        get("/") {
-            val players = Array(60) {
-                val skill = when (Random.nextInt() % 3) {
-                    0 -> Skill.A
-                    1 -> Skill.B
-                    2 -> Skill.C
-                    else -> Skill.B
-                }
-                val cannotMeet = arrayListOf<String>()
-                if (it == 0) {
-                    cannotMeet.add("01")
-                }
-                if (it == 1) {
-                    cannotMeet.add("00")
-                }
-                if (it == 2) {
-                    cannotMeet.add("03")
-                }
-                if (it == 3) {
-                    cannotMeet.add("02")
-                }
-                if (it == 4) {
-                    cannotMeet.add("05")
-                }
-                if (it == 5) {
-                    cannotMeet.add("04")
-                }
-                if (it == 6) {
-                    cannotMeet.add("1")
-                }
-                Player("0$it", "0$it", skill, cannotMeet)
+                tournamentsRepository.createTournament(name, login)
+                call.respond(HttpStatusCode.OK)
             }
-            call.respondText(
-                TourSeatingFactory(players.toList(), 6).generate().toString(),
-                status = HttpStatusCode.OK
-            )
+            post("/api/tournaments/{id}/generate") {
+
+            }
+            get("/") {
+                val players = Array(60) {
+                    val skill = when (Random.nextInt() % 3) {
+                        0 -> Skill.A
+                        1 -> Skill.B
+                        2 -> Skill.C
+                        else -> Skill.B
+                    }
+                    val cannotMeet = arrayListOf<String>()
+                    if (it == 0) {
+                        cannotMeet.add("01")
+                    }
+                    if (it == 1) {
+                        cannotMeet.add("00")
+                    }
+                    if (it == 2) {
+                        cannotMeet.add("03")
+                    }
+                    if (it == 3) {
+                        cannotMeet.add("02")
+                    }
+                    if (it == 4) {
+                        cannotMeet.add("05")
+                    }
+                    if (it == 5) {
+                        cannotMeet.add("04")
+                    }
+                    if (it == 6) {
+                        cannotMeet.add("1")
+                    }
+                    Player("0$it", "0$it", skill, cannotMeet)
+                }
+                call.respondText(
+                    TourSeatingFactory(players.toList(), 6).generate().toString(),
+                    status = HttpStatusCode.OK
+                )
+            }
         }
     }
 }
