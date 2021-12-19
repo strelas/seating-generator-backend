@@ -87,7 +87,7 @@ fun Application.module(testing: Boolean = false) {
                 val type = object : TypeToken<List<Player>>() {}.type
                 val players = Gson().fromJson<List<Player>>(call.receive<String>(), type)
                 val repository = appAssembly.getTournamentRepository(id)
-                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString()
+                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString().trim('"')
                 if (loginManager.ownerOf(nickname, id)) {
                     for (player in players) {
                         repository.appendPlayer(player)
@@ -102,7 +102,7 @@ fun Application.module(testing: Boolean = false) {
                 val type = object : TypeToken<List<Player>>() {}.type
                 val players = Gson().fromJson<List<Player>>(call.receive<String>(), type)
                 val repository = appAssembly.getTournamentRepository(id)
-                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString()
+                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString().trim('"')
                 if (!loginManager.ownerOf(nickname, id)) {
                     call.respond(HttpStatusCode.Forbidden)
                 } else {
@@ -113,8 +113,7 @@ fun Application.module(testing: Boolean = false) {
                 }
             }
             get("/api/tournaments") {
-                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString()
-
+                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString().trim('"')
                 val tournaments = loginManager.getTournamentsIds(nickname)
                     .mapNotNull { tournamentsRepository.getTournamentById(it) }
                     .filter { loginManager.ownerOf(nickname, it.id) }
@@ -125,7 +124,7 @@ fun Application.module(testing: Boolean = false) {
                 val id = call.parameters["id"]!!.toInt()
                 val repository = appAssembly.getTournamentRepository(id)
 
-                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString()
+                val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString().trim('"')
                 if (!loginManager.ownerOf(nickname, id)) {
                     call.respond(HttpStatusCode.Forbidden)
                     return@get
@@ -138,7 +137,7 @@ fun Application.module(testing: Boolean = false) {
             }
             post("/api/tournaments/create") {
                 val json = Gson().fromJson<Map<String, Any?>>(call.receive<String>(), Map::class.java)
-                val login = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString()
+                val login = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString().trim('"')
                 val name = json["name"] as String
 
                 tournamentsRepository.createTournament(name, login)
