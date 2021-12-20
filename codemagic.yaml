@@ -1,0 +1,5 @@
+workflows:
+  backend-build:
+    name: backend-build
+    scripts:
+      - ./gradlew distZip
