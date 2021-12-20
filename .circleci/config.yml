@@ -45,4 +45,5 @@ jobs:
       # run tests!
       #- run: gradle test
       - run: gradle distZip
-      - run: sudo scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -P 2323 build/distributions/seating-generator-backend-0.1.zip avan@31.211.71.43:/home/avan/server.zip
+      - run: ls /Users/me/.ssh/
+      - run: sudo scp -i /Users/me/.ssh/id_rsa_server -o StrictHostKeyChecking=no -P 2323 build/distributions/seating-generator-backend-0.1.zip avan@31.211.71.43:/home/avan/server.zip
