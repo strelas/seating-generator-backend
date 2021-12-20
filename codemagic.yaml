@@ -2,4 +2,5 @@ workflows:
   backend-build:
     name: backend-build
     scripts:
+      - gradle wrapper
       - ./gradlew distZip
