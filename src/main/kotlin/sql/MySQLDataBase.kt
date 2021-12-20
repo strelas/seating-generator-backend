@@ -8,7 +8,7 @@ class MySQLDataBase {
 
     init {
         Class.forName("com.mysql.jdbc.Driver").newInstance()
-        connection = DriverManager.getConnection("jdbc:mariadb://mafia-generator.tomsk.ru:3306?characterEncoding=utf8", "remote", "remote")
+        connection = DriverManager.getConnection("jdbc:mariadb://31.211.71.43:3306?characterEncoding=utf8", "remote", "remote")
     }
 
     fun executeQuery(command: String): ResultSet {
