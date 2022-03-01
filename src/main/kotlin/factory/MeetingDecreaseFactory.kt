@@ -6,13 +6,10 @@ class MeetingDecreaseFactory {
     companion object {
         fun getNewSeatingWithMinRating(seating: TourSeating): TourSeating {
             val meetingSettings = MeetingSettings.createFromSeating(seating)
-            val rating = meetingSettings.rating
-            println("${rating.first}:${rating.second}")
             var value = decreaseIteration(seating, meetingSettings)
             while (value.second) {
                 value = decreaseIteration(value.first, meetingSettings)
             }
-            println(meetingSettings)
             return value.first
         }
 
@@ -47,8 +44,6 @@ class MeetingDecreaseFactory {
                                     meetingSettings
                                 )
                                 result ?: continue
-                                val newRating = meetingSettings.rating
-                                println("${newRating.first}.${newRating.second}")
                                 return Pair(result, true)
                             }
                         }

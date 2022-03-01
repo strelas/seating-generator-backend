@@ -2,7 +2,8 @@ package factory
 
 import entity.Player
 import entity.Skill
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import kotlin.random.Random
 
 internal class TourSeatingFactoryTest {
@@ -59,6 +60,6 @@ internal class TourSeatingFactoryTest {
                 flag = false
             }
         }
-        assert(flag)
+        assertEquals(true, flag)
     }
 }
