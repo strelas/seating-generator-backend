@@ -1,7 +1,8 @@
 package entity
 
-import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
 
 internal class RoundSeatingTest {
     @Test

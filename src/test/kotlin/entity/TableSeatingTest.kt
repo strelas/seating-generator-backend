@@ -1,8 +1,8 @@
 package entity
 
-import com.google.gson.Gson
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
+import org.junit.Assert.assertEquals
+import org.junit.Test
+
 
 internal class TableSeatingTest {
     @Test
