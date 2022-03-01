@@ -52,11 +52,10 @@ internal class TourSeatingFactoryTest {
             }
             Player("0$it", "0$it", skill, cannotMeet)
         }.toList()
-        val factory = TourSeatingFactory(players, 6)
         var flag = true
 
         repeat(10) {
-            val seating = factory.generate()
+            val seating = TourSeatingFactory.generate(players, 6)
             if (seating.rounds.any { !it.isLegalRound }) {
                 flag = false
             }

@@ -9,6 +9,7 @@ class UsersRepository constructor(private val database: MySQLDataBase) {
             }
             return false
         } catch (e: Exception) {
+            e.printStackTrace()
             return false
         }
     }

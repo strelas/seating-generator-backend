@@ -6,6 +6,7 @@ import entity.Player
 import entity.Skill
 import entity.Tournament
 import factory.MeetingDecreaseFactory
+import factory.SwissSeatingFactory
 import factory.TourSeatingFactory
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -20,7 +21,7 @@ import java.util.*
 import kotlin.random.Random
 import kotlin.time.ExperimentalTime
 
-fun main(args: Array<String>): Unit {
+fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
 }
 
@@ -112,6 +113,16 @@ fun Application.module(testing: Boolean = false) {
                     call.respond(HttpStatusCode.OK)
                 }
             }
+            post("/api/tournaments/{id}/generate_swiss_seating") {
+                val id = call.parameters["id"]!!.toInt()
+
+            }
+            get("/api/tournaments/{id}/generate_seating") {
+                val id = call.parameters["id"]!!.toInt()
+                val repository = appAssembly.getTournamentRepository(id)
+                val players = repository.getPlayers()
+
+            }
             get("/api/tournaments") {
                 val nickname = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString().trim('"')
                 val tournaments = loginManager.getTournamentsIds(nickname)
@@ -140,7 +151,7 @@ fun Application.module(testing: Boolean = false) {
                 val login = call.principal<JWTPrincipal>()!!.payload.claims["username"].toString().trim('"')
                 val name = json["name"] as String
 
-                tournamentsRepository.createTournament(name, login)
+                tournamentsRepository.createTournament(name, login, 0, 0, 0)
                 call.respond(HttpStatusCode.OK)
             }
             post("/api/tournaments/{id}/generate") {
@@ -179,7 +190,7 @@ fun Application.module(testing: Boolean = false) {
                     Player("0$it", "0$it", skill, cannotMeet)
                 }
                 call.respondText(
-                    TourSeatingFactory(players.toList(), 6).generate().toString(),
+                    TourSeatingFactory.generate(players.toList(), 6).toString(),
                     status = HttpStatusCode.OK
                 )
             }

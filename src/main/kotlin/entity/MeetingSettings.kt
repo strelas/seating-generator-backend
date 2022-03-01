@@ -8,7 +8,7 @@ class MeetingSettings constructor(
     private val players: List<Player>
 ) {
 
-    val rating: Pair<Int,Int>
+    val rating: Pair<Int, Int>
         get() {
             var rating = 0
             var countOfSameRating = 0
@@ -19,19 +19,21 @@ class MeetingSettings constructor(
                     if (count.index == playersList.index) {
                         continue
                     }
-                    if (players[playersList.index].cannotMeet.contains(players[count.index].nickname)) {
+                    if (players[playersList.index].cannotMeet.contains(players[count.index].nickname)
+                        || players[count.index].cannotMeet.contains(players[playersList.index].nickname)
+                    ) {
                         continue
                     }
                     min = min(count.value, min)
                     max = max(count.value, max)
                 }
                 if (min == 0) {
-                    min-=4
+                    max = 10000
                 }
-                if (rating == max-min) {
+                if (rating == max - min) {
                     countOfSameRating++
-                } else if (rating < max-min) {
-                    rating = max-min
+                } else if (rating < max - min) {
+                    rating = max - min
                     countOfSameRating = 1
                 }
             }
@@ -60,7 +62,7 @@ class MeetingSettings constructor(
                 if (player == anotherPlayer) {
                     continue
                 }
-                result+="${players[anotherPlayer].nickname}=${max(list[player][anotherPlayer], 0)};"
+                result += "${players[anotherPlayer].nickname}=${max(list[player][anotherPlayer], 0)};"
             }
             result += "\n"
         }

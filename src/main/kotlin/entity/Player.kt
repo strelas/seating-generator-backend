@@ -12,4 +12,8 @@ data class Player(
     val skill: Skill,
     val cannotMeet: List<String>,
     val place: Int = 0
-)
+) {
+    companion object {
+        fun withNicknameOnly(nickname: String): Player = Player(nickname, nickname, Skill.A, arrayListOf())
+    }
+}

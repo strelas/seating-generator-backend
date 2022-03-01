@@ -68,7 +68,7 @@ class MeetingDecreaseFactory {
             settings: MeetingSettings
         ): TourSeating? {
             val ratingBefore = settings.rating
-            val command = {
+            val resetMeeting = {
                 for (anotherPlayer in tourSeating.rounds[roundIndex].tables[firstTableIndex].players) {
                     if (anotherPlayer == firstPlayer || anotherPlayer == secondPlayer) {
                         continue
@@ -84,6 +84,7 @@ class MeetingDecreaseFactory {
                     settings.increaseMeeting(secondPlayer, anotherPlayer)
                 }
             }
+
             for (anotherPlayer in tourSeating.rounds[roundIndex].tables[firstTableIndex].players) {
                 if (anotherPlayer == firstPlayer || anotherPlayer == secondPlayer) {
                     continue
@@ -100,15 +101,15 @@ class MeetingDecreaseFactory {
             }
             val newRating = settings.rating
             if (newRating.first > ratingBefore.first) {
-                command()
+                resetMeeting()
                 return null
             }
             if (newRating.second > ratingBefore.second && newRating.first == ratingBefore.first) {
-                command()
+                resetMeeting()
                 return null
             }
             if (newRating.first == ratingBefore.first && newRating.second == ratingBefore.second) {
-                command()
+                resetMeeting()
                 return null
             }
             val seating = TourSeating(tourSeating.rounds.map { round ->
@@ -128,7 +129,10 @@ class MeetingDecreaseFactory {
                     }.toMutableList(), table.referee)
                 }.toMutableList())
             }.toMutableList())
-            println(seating.rounds.all { it.isLegalRound })
+            if (!seating.rounds.all { it.isLegalRound }) {
+                resetMeeting()
+                return null
+            }
             return seating
         }
     }
